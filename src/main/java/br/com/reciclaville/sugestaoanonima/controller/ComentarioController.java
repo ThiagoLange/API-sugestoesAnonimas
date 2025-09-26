@@ -17,14 +17,26 @@ public class ComentarioController {
     private ComentarioService comentarioService;
 
     @GetMapping
-    public List<Comentario> listarComentarios(@PathVariable Long sugestaoId) {
-        return comentarioService.listarComentariosPorSugestao(sugestaoId);
+    public ResponseEntity<List<Comentario>> listarComentarios(@PathVariable Long sugestaoId) {
+        List<Comentario> comentarios = comentarioService.listarComentariosPorSugestao(sugestaoId);
+        return ResponseEntity.ok(comentarios);
     }
 
+    /**
+     * Endpoint para criar um novo comentário para uma sugestão.
+     * - Mapeado para POST /api/sugestoes/{sugestaoId}/comentarios
+     * - Recebe um JSON com o campo "texto" no corpo da requisição.
+     * - Retorna HTTP Status 201 Created com o corpo do comentário criado.
+     *
+     * @param sugestaoId O ID da sugestão pai, vindo da URL.
+     * @param comentario O objeto Comentario deserializado do corpo JSON da requisição.
+     * @return ResponseEntity contendo o comentário criado.
+     */
     @PostMapping
     public ResponseEntity<Comentario> adicionarComentario(
             @PathVariable Long sugestaoId,
-            @RequestBody Comentario comentario) {
+            @RequestBody Comentario comentario) { // Para um DTO simples como este, receber a entidade é aceitável.
+
         Comentario novoComentario = comentarioService.adicionarComentario(sugestaoId, comentario);
         return new ResponseEntity<>(novoComentario, HttpStatus.CREATED);
     }
