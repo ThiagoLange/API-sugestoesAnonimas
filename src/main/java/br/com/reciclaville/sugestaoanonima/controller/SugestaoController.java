@@ -8,6 +8,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
+
 import java.net.URI;
 import java.util.List;
 
@@ -19,49 +20,44 @@ public class SugestaoController {
     private SugestaoService sugestaoService;
 
     /**
-     * Endpoint para cadastrar (criar) uma nova sugestão.
-     * Segue os padrões REST e convenções Java.
-     * - Mapeado para POST /api/sugestoes
-     * - Recebe um SugestaoRequestDTO no corpo da requisição.
-     * - Usa @Valid para ativar as validações definidas no DTO.
-     * - Retorna HTTP Status 201 Created em caso de sucesso.
-     * - Inclui o cabeçalho 'Location' com a URL do novo recurso.
-     * - Retorna o objeto recém-criado no corpo da resposta.
+     * Endpoint para consultar sugestões com ordenação padrão e filtro opcional por título.
+     * - Mapeado para GET /api/sugestoes
+     * - A ordenação é sempre por data de atualização decrescente.
+     * - Aceita um parâmetro de consulta opcional 'titulo' para filtrar os resultados.
+     * Exemplo: /api/sugestoes?titulo=limpeza
+     * - Retorna HTTP Status 200 OK com la lista de sugestões (que pode ser vazia).
      *
-     * @param dto Os dados da sugestão a ser criada.
-     * @return ResponseEntity contendo a resposta HTTP apropriada.
+     * @param titulo Parâmetro de consulta não obrigatório para filtrar pelo título.
+     * @return ResponseEntity contendo a lista de sugestões.
      */
-    @PostMapping
-    public ResponseEntity<Sugestao> criarSugestao(@Valid @RequestBody SugestaoRequestDTO dto) {
-        // Delega a lógica de negócio para a camada de serviço
-        Sugestao novaSugestao = sugestaoService.criar(dto);
-
-        // Constrói a URI do novo recurso para o cabeçalho "Location"
-        URI location = ServletUriComponentsBuilder
-                .fromCurrentRequest() // Pega a URI base (http://.../api/sugestoes)
-                .path("/{id}") // Adiciona o placeholder do ID
-                .buildAndExpand(novaSugestao.getId()) // Substitui o placeholder pelo ID real
-                .toUri(); // Converte para o formato URI
-
-        // Retorna a resposta HTTP 201 Created, com a URI no header e o objeto no body
-        return ResponseEntity.created(location).body(novaSugestao);
-    }
-
-    // --- Outros endpoints do controller ---
-
     @GetMapping
-    public ResponseEntity<List<Sugestao>> listarTodasSugestoes() {
-        return ResponseEntity.ok(sugestaoService.listarTodas());
+    public ResponseEntity<List<Sugestao>> listarTodasSugestoes(
+            @RequestParam(required = false) String titulo) {
+        List<Sugestao> lista = sugestaoService.listarTodas(titulo);
+        return ResponseEntity.ok(lista);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<Sugestao> buscarSugestaoPorId(@PathVariable Long id) {
-        return ResponseEntity.ok(sugestaoService.buscarPorId(id));
+        Sugestao sugestao = sugestaoService.buscarPorId(id);
+        return ResponseEntity.ok(sugestao);
+    }
+
+    @PostMapping
+    public ResponseEntity<Sugestao> criarSugestao(@Valid @RequestBody SugestaoRequestDTO dto) {
+        Sugestao novaSugestao = sugestaoService.criar(dto);
+        URI location = ServletUriComponentsBuilder
+                .fromCurrentRequest()
+                .path("/{id}")
+                .buildAndExpand(novaSugestao.getId())
+                .toUri();
+        return ResponseEntity.created(location).body(novaSugestao);
     }
 
     @PutMapping("/{id}")
     public ResponseEntity<Sugestao> atualizarSugestao(@PathVariable Long id, @Valid @RequestBody SugestaoRequestDTO dto) {
-        return ResponseEntity.ok(sugestaoService.atualizar(id, dto));
+        Sugestao sugestaoAtualizada = sugestaoService.atualizar(id, dto);
+        return ResponseEntity.ok(sugestaoAtualizada);
     }
 
     @DeleteMapping("/{id}")

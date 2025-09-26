@@ -7,6 +7,8 @@ import jakarta.persistence.EntityNotFoundException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+
 import java.util.List;
 
 @Service
@@ -16,35 +18,35 @@ public class SugestaoService {
     private SugestaoRepository sugestaoRepository;
 
     /**
-     * Cria uma nova sugestão no banco de dados a partir dos dados de um DTO.
-     * @param dto O objeto de transferência de dados com o título e a descrição.
-     * @return A entidade Sugestao que foi salva, agora com ID e timestamps.
+     * Lista as sugestões com ordenação e filtro opcionais.
+     * Se um título for fornecido, filtra por ele.
+     * Caso contrário, retorna todas as sugestões.
+     * A ordenação por 'dataAtualizacao DESC' é garantida em ambos os casos pelos métodos do repositório.
+     *
+     * @param titulo O filtro opcional para o título da sugestão. Pode ser nulo ou vazio.
+     * @return A lista de sugestões filtrada e ordenada.
      */
-    @Transactional
-    public Sugestao criar(SugestaoRequestDTO dto) {
-        // 1. Cria uma nova instância da entidade de persistência.
-        Sugestao novaSugestao = new Sugestao();
-
-        // 2. Mapeia os dados do DTO para a entidade.
-        novaSugestao.setTitulo(dto.getTitulo());
-        novaSugestao.setDescricao(dto.getDescricao());
-
-        // 3. Salva a nova entidade no banco de dados. Os timestamps serão gerados
-        //    automaticamente pela anotação @PrePersist na entidade.
-        return sugestaoRepository.save(novaSugestao);
-    }
-
-    // --- Outros métodos do serviço para completar a funcionalidade ---
-
     @Transactional(readOnly = true)
-    public List<Sugestao> listarTodas() {
-        return sugestaoRepository.findAll();
+    public List<Sugestao> listarTodas(String titulo) {
+        if (StringUtils.hasText(titulo)) {
+            return sugestaoRepository.findByTituloContainingIgnoreCaseOrderByDataAtualizacaoDesc(titulo);
+        } else {
+            return sugestaoRepository.findAllByOrderByDataAtualizacaoDesc();
+        }
     }
 
     @Transactional(readOnly = true)
     public Sugestao buscarPorId(Long id) {
         return sugestaoRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Sugestão não encontrada com o id: " + id));
+    }
+
+    @Transactional
+    public Sugestao criar(SugestaoRequestDTO dto) {
+        Sugestao novaSugestao = new Sugestao();
+        novaSugestao.setTitulo(dto.getTitulo());
+        novaSugestao.setDescricao(dto.getDescricao());
+        return sugestaoRepository.save(novaSugestao);
     }
 
     @Transactional

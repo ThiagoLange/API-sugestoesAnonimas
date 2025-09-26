@@ -11,7 +11,7 @@ import java.util.List;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = "comentarios") // Evita recursão no toString
+@ToString(exclude = "comentarios")
 public class Sugestao {
 
     @Id
@@ -27,7 +27,13 @@ public class Sugestao {
     private LocalDateTime dataEnvio;
     private LocalDateTime dataAtualizacao;
 
+    // A MÁGICA ACONTECE AQUI!
+    /**
+     * Adicionamos @OrderBy para que o JPA sempre ordene esta coleção
+     * pela coluna 'dataEnvio' em ordem descendente (DESC) no nível do banco de dados.
+     */
     @OneToMany(mappedBy = "sugestao", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @OrderBy("dataEnvio DESC") // <--- ADICIONE ESTA LINHA
     private List<Comentario> comentarios = new ArrayList<>();
 
     @PrePersist
